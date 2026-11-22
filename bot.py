@@ -99,14 +99,14 @@ active_2fa_sessions = {}
 # ==================== REPLY KEYBOARDS (95% OF UI) ====================
 
 def get_main_reply_keyboard():
-    """Builds the main menu ReplyKeyboardMarkup with clean styled buttons."""
+    """Builds the main menu ReplyKeyboardMarkup with native styled colored buttons (Green, Blue, Red)."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    btn_fake = types.KeyboardButton("Fake Name")
-    btn_2fa = types.KeyboardButton("Get 2FA")
-    btn_fblite = types.KeyboardButton("FB Lite UID")
-    btn_font = types.KeyboardButton("Stylish Font")
-    btn_ua = types.KeyboardButton("User-Agent")
-    btn_history = types.KeyboardButton("History")
+    btn_fake = types.KeyboardButton("Fake Name", style="primary")
+    btn_2fa = types.KeyboardButton("Get 2FA", style="success")
+    btn_fblite = types.KeyboardButton("FB Lite UID", style="primary")
+    btn_font = types.KeyboardButton("Stylish Font", style="primary")
+    btn_ua = types.KeyboardButton("User-Agent", style="primary")
+    btn_history = types.KeyboardButton("History", style="danger")
     
     markup.add(btn_fake, btn_2fa)
     markup.add(btn_fblite, btn_font)
@@ -117,51 +117,51 @@ def get_main_reply_keyboard():
 def get_fake_name_reply_keyboard():
     """Reply Keyboard for Fake Name actions."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(types.KeyboardButton("Next Name"), types.KeyboardButton("Random"))
-    markup.add(types.KeyboardButton("Male"), types.KeyboardButton("Female"))
-    markup.add(types.KeyboardButton("Back to Main Menu"))
+    markup.add(types.KeyboardButton("Next Name", style="success"), types.KeyboardButton("Random", style="primary"))
+    markup.add(types.KeyboardButton("Male", style="primary"), types.KeyboardButton("Female", style="primary"))
+    markup.add(types.KeyboardButton("Back to Main Menu", style="danger"))
     return markup
 
 
 def get_2fa_reply_keyboard():
     """Reply Keyboard for 2FA actions."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(types.KeyboardButton("Refresh 2FA"), types.KeyboardButton("Get 2FA"))
-    markup.add(types.KeyboardButton("Back to Main Menu"))
+    markup.add(types.KeyboardButton("Refresh 2FA", style="success"), types.KeyboardButton("Get 2FA", style="success"))
+    markup.add(types.KeyboardButton("Back to Main Menu", style="danger"))
     return markup
 
 
 def get_fb_lite_reply_keyboard():
     """Reply Keyboard for FB Lite UID actions."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    markup.add(types.KeyboardButton("Check Another UID"))
-    markup.add(types.KeyboardButton("Back to Main Menu"))
+    markup.add(types.KeyboardButton("Check Another UID", style="primary"))
+    markup.add(types.KeyboardButton("Back to Main Menu", style="danger"))
     return markup
 
 
 def get_font_reply_keyboard():
     """Reply Keyboard for Stylish Font actions."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    markup.add(types.KeyboardButton("Try Another Text"))
-    markup.add(types.KeyboardButton("Back to Main Menu"))
+    markup.add(types.KeyboardButton("Try Another Text", style="primary"))
+    markup.add(types.KeyboardButton("Back to Main Menu", style="danger"))
     return markup
 
 
 def get_user_agent_reply_keyboard():
     """Reply Keyboard for User-Agent actions."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(types.KeyboardButton("Random UA"), types.KeyboardButton("Next UA"))
-    markup.add(types.KeyboardButton("iPhone"), types.KeyboardButton("Android"))
-    markup.add(types.KeyboardButton("Windows"), types.KeyboardButton("Mac"))
-    markup.add(types.KeyboardButton("Back to Main Menu"))
+    markup.add(types.KeyboardButton("Random UA", style="success"), types.KeyboardButton("Next UA", style="primary"))
+    markup.add(types.KeyboardButton("iPhone", style="primary"), types.KeyboardButton("Android", style="primary"))
+    markup.add(types.KeyboardButton("Windows", style="primary"), types.KeyboardButton("Mac", style="primary"))
+    markup.add(types.KeyboardButton("Back to Main Menu", style="danger"))
     return markup
 
 
 def get_history_reply_keyboard():
     """Reply Keyboard for History actions."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(types.KeyboardButton("Refresh History"), types.KeyboardButton("Clear History"))
-    markup.add(types.KeyboardButton("Clear Cache"), types.KeyboardButton("Back to Main Menu"))
+    markup.add(types.KeyboardButton("Refresh History", style="success"), types.KeyboardButton("Clear History", style="danger"))
+    markup.add(types.KeyboardButton("Clear Cache", style="danger"), types.KeyboardButton("Back to Main Menu", style="danger"))
     return markup
 
 
