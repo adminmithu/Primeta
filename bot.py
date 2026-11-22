@@ -219,6 +219,22 @@ def create_user_agent_markup(ua_string):
     return markup
 
 
+def get_main_inline_keyboard():
+    """Builds the main menu InlineKeyboardMarkup with Green (success), Blue (primary), Red (danger) colored buttons."""
+    markup = InlineKeyboardMarkup(row_width=2)
+    btn_fake = InlineKeyboardButton(text="Fake Name", callback_data="fn:random", style="primary")
+    btn_2fa = InlineKeyboardButton(text="Get 2FA", callback_data="act:2fa", style="success")
+    btn_fblite = InlineKeyboardButton(text="FB Lite UID", callback_data="act:fblite", style="primary")
+    btn_font = InlineKeyboardButton(text="Stylish Font", callback_data="font:try", style="primary")
+    btn_ua = InlineKeyboardButton(text="User-Agent", callback_data="ua:random", style="primary")
+    btn_history = InlineKeyboardButton(text="History", callback_data="hist:refresh", style="danger")
+    
+    markup.add(btn_fake, btn_2fa)
+    markup.add(btn_fblite, btn_font)
+    markup.add(btn_ua, btn_history)
+    return markup
+
+
 # ==================== MESSAGE FORMATTERS ====================
 
 def format_fake_name_message(identity):
@@ -375,12 +391,12 @@ def handle_restart(message):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    bot.send_message(message.chat.id, restart_text, reply_markup=get_main_reply_keyboard())
+    bot.send_message(message.chat.id, restart_text, reply_markup=get_main_inline_keyboard())
 
 
 @bot.message_handler(commands=["start", "menu"])
 def send_welcome(message):
-    """Handles /start command and displays main Reply Keyboard."""
+    """Handles /start command and displays main Reply & Inline Keyboards."""
     user_id = message.from_user.id
     user_states[user_id] = "idle"
     
@@ -397,12 +413,15 @@ def send_welcome(message):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_reply_keyboard())
+    # Ensure bottom reply keyboard is active
+    bot.send_message(message.chat.id, "👇 <b>Multi-Tool Bot Menu:</b>", reply_markup=get_main_reply_keyboard())
+    # Send welcome text with colored Inline Buttons (Success Green, Primary Blue, Danger Red)
+    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_inline_keyboard())
 
 
 @bot.message_handler(func=lambda msg: msg.text and msg.text.strip().lower() in ["back to main menu", "main menu", "menu", "back", "/menu"])
 def handle_back_to_main_menu(message):
-    """Returns to the main menu with primary reply keyboard."""
+    """Returns to the main menu with primary colored keyboards."""
     user_id = message.from_user.id
     user_states[user_id] = "idle"
     welcome_text = (
@@ -412,7 +431,7 @@ def handle_back_to_main_menu(message):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_reply_keyboard())
+    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_inline_keyboard())
 
 
 @bot.message_handler(func=lambda msg: msg.text and msg.text.strip().lower() in ["fake name", "fakename", "next name", "random", "male", "female"])
@@ -749,7 +768,7 @@ def handle_all_text(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == "menu:main")
 def callback_back_to_main(call):
-    """Returns to main menu."""
+    """Returns to main menu with colored inline buttons."""
     active_2fa_sessions.pop(call.message.chat.id, None)
     try:
         bot.answer_callback_query(call.id)
@@ -762,7 +781,31 @@ def callback_back_to_main(call):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    bot.send_message(call.message.chat.id, text, reply_markup=get_main_reply_keyboard())
+    try:
+        bot.edit_message_text(text, call.message.chat.id, call.message.message_id, reply_markup=get_main_inline_keyboard())
+    except Exception:
+        bot.send_message(call.message.chat.id, text, reply_markup=get_main_inline_keyboard())
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "act:2fa")
+def callback_act_2fa(call):
+    """Prompts user to send 2FA secret key or photo, sets 2FA Reply Keyboard."""
+    user_id = call.from_user.id
+    user_states[user_id] = "waiting_2fa"
+    try:
+        bot.answer_callback_query(call.id)
+    except Exception:
+        pass
+    prompt_text = (
+        "🔑 <b>2FA Authenticator (2FA.CN Mode)</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "Please send your <b>2FA Secret Key</b> or <b>QR Code Screenshot</b>:\n\n"
+        "📝 <i>Example:</i> <code>30FC RA5M D2O2 PRU2</code>\n\n"
+        "<i>(Supports text keys and 📷 QR code photos!)</i>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "⚡ <i>Tip: You can paste your 2FA key anytime directly!</i>"
+    )
+    bot.send_message(call.message.chat.id, prompt_text, reply_markup=get_2fa_reply_keyboard())
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "act:fblite")
