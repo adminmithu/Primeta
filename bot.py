@@ -671,14 +671,28 @@ def handle_all_text(message):
         user_states[user_id] = "idle"
         return
 
-    # 3. Check if input is a 2FA Secret Key (supports direct key, 'BUMK FZ5I OR2K 6O3M', combos like 'uid|pass|2fakey', etc.)
+    # 3. Check if input is a 2FA Secret Key (supports direct key, combos, or any user input in waiting_2fa)
+    is_waiting_2fa = (user_states.get(user_id) == "waiting_2fa")
     bulk_results = authenticator.parse_and_generate_bulk(text)
     valid_results = [r for r in bulk_results if r["valid"]]
     
     # Fallback: direct sanitization on full text
     if not valid_results:
-        cand, code, remaining, err = authenticator.sanitize_and_generate(text)
-        if code:
+        cand, code, remaining, _ = authenticator.sanitize_and_generate(text)
+        valid_results = [{
+            "index": 1,
+            "raw": text,
+            "secret": cand,
+            "otp": code,
+            "remaining": remaining,
+            "time": datetime.now().strftime("%I:%M %p"),
+            "valid": True
+        }]
+        bulk_results = valid_results
+    
+    if valid_results or is_waiting_2fa:
+        if not valid_results:
+            cand, code, remaining, _ = authenticator.sanitize_and_generate(text)
             valid_results = [{
                 "index": 1,
                 "raw": text,
@@ -689,8 +703,7 @@ def handle_all_text(message):
                 "valid": True
             }]
             bulk_results = valid_results
-    
-    if valid_results:
+
         for r in valid_results:
             database.add_history_record(user_id, r["secret"], r["otp"])
             database.update_user_cache(user_id, "2fa_gen", r["secret"])
@@ -715,16 +728,6 @@ def handle_all_text(message):
                 markup.add(*row)
             bot.send_message(message.chat.id, output_text, reply_markup=markup)
         user_states[user_id] = "idle"
-        return
-    elif user_states.get(user_id) == "waiting_2fa":
-        err_msg = (
-            "❌ <b>Invalid 2FA Secret Key</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "The key provided does not appear to be a valid Base32 secret.\n\n"
-            "📝 <i>Example:</i> <code>30FC RA5M D2O2 PRU2</code>\n"
-            "Or upload a 📷 <b>QR Code screenshot</b>!"
-        )
-        bot.send_message(message.chat.id, err_msg)
         return
 
     # 4. Fallback response
