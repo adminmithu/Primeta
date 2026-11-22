@@ -1,0 +1,5 @@
+pyTelegramBotAPI>=4.20.0
+PyOTP>=2.9.0
+python-dotenv>=1.0.0
+pillow>=10.0.0
+zxing-cpp>=3.0.0
