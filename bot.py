@@ -189,17 +189,12 @@ def create_2fa_output_markup(otp_code, secret_key=None):
 
 
 def create_fb_lite_markup(uid):
-    """Inline copy and profile open buttons for FB Lite: Success Green, Primary Blue, Danger Red."""
+    """Inline copy and profile open buttons for FB Lite."""
     markup = InlineKeyboardMarkup(row_width=2)
     btn_copy_uid = InlineKeyboardButton(text=f"Copy UID: {uid}", copy_text=CopyTextButton(text=uid), style="success")
     clean_url = f"https://facebook.com/{uid}"
     btn_open = InlineKeyboardButton(text="Open Clean Profile ↗", url=clean_url, style="primary")
-    markup.add(btn_copy_uid)
-    markup.add(btn_open)
-    
-    btn_another = InlineKeyboardButton(text="Extract Another", callback_data="act:fblite", style="primary")
-    btn_back = InlineKeyboardButton(text="Back to Main Menu", callback_data="menu:main", style="danger")
-    markup.add(btn_another, btn_back)
+    markup.add(btn_copy_uid, btn_open)
     return markup
 
 
@@ -216,22 +211,6 @@ def create_user_agent_markup(ua_string):
     markup = InlineKeyboardMarkup()
     btn_copy = InlineKeyboardButton(text="Copy User-Agent", copy_text=CopyTextButton(text=ua_string), style="success")
     markup.add(btn_copy)
-    return markup
-
-
-def get_main_inline_keyboard():
-    """Builds the main menu InlineKeyboardMarkup with Green (success), Blue (primary), Red (danger) colored buttons."""
-    markup = InlineKeyboardMarkup(row_width=2)
-    btn_fake = InlineKeyboardButton(text="Fake Name", callback_data="fn:random", style="primary")
-    btn_2fa = InlineKeyboardButton(text="Get 2FA", callback_data="act:2fa", style="success")
-    btn_fblite = InlineKeyboardButton(text="FB Lite UID", callback_data="act:fblite", style="primary")
-    btn_font = InlineKeyboardButton(text="Stylish Font", callback_data="font:try", style="primary")
-    btn_ua = InlineKeyboardButton(text="User-Agent", callback_data="ua:random", style="primary")
-    btn_history = InlineKeyboardButton(text="History", callback_data="hist:refresh", style="danger")
-    
-    markup.add(btn_fake, btn_2fa)
-    markup.add(btn_fblite, btn_font)
-    markup.add(btn_ua, btn_history)
     return markup
 
 
@@ -391,12 +370,12 @@ def handle_restart(message):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    bot.send_message(message.chat.id, restart_text, reply_markup=get_main_inline_keyboard())
+    bot.send_message(message.chat.id, restart_text, reply_markup=get_main_reply_keyboard())
 
 
 @bot.message_handler(commands=["start", "menu"])
 def send_welcome(message):
-    """Handles /start command and displays main Reply & Inline Keyboards."""
+    """Handles /start command and displays main Reply Keyboard."""
     user_id = message.from_user.id
     user_states[user_id] = "idle"
     
@@ -413,15 +392,12 @@ def send_welcome(message):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    # Ensure bottom reply keyboard is active
-    bot.send_message(message.chat.id, "👇 <b>Multi-Tool Bot Menu:</b>", reply_markup=get_main_reply_keyboard())
-    # Send welcome text with colored Inline Buttons (Success Green, Primary Blue, Danger Red)
-    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_inline_keyboard())
+    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_reply_keyboard())
 
 
 @bot.message_handler(func=lambda msg: msg.text and msg.text.strip().lower() in ["back to main menu", "main menu", "menu", "back", "/menu"])
 def handle_back_to_main_menu(message):
-    """Returns to the main menu with primary colored keyboards."""
+    """Returns to the main menu with primary reply keyboard."""
     user_id = message.from_user.id
     user_states[user_id] = "idle"
     welcome_text = (
@@ -431,7 +407,7 @@ def handle_back_to_main_menu(message):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_inline_keyboard())
+    bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_reply_keyboard())
 
 
 @bot.message_handler(func=lambda msg: msg.text and msg.text.strip().lower() in ["fake name", "fakename", "next name", "random", "male", "female"])
@@ -781,10 +757,7 @@ def callback_back_to_main(call):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "👇 <b>Select an option below:</b>"
     )
-    try:
-        bot.edit_message_text(text, call.message.chat.id, call.message.message_id, reply_markup=get_main_inline_keyboard())
-    except Exception:
-        bot.send_message(call.message.chat.id, text, reply_markup=get_main_inline_keyboard())
+    bot.send_message(call.message.chat.id, text, reply_markup=get_main_reply_keyboard())
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "act:2fa")
