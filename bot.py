@@ -93,6 +93,7 @@ else:
 # In-memory user states and cache
 user_states = {}
 user_cache_storage = {}
+active_2fa_sessions = {}
 
 
 # ==================== REPLY KEYBOARDS (95% OF UI) ====================
@@ -167,48 +168,53 @@ def get_history_reply_keyboard():
 # ==================== MINIMAL INLINE KEYBOARDS (1-Click Copy / URL Only) ====================
 
 def create_fake_name_markup(first_name, last_name, full_name):
-    """Inline keyboard for Fake Name - 1-click native copy buttons only."""
+    """Inline keyboard for Fake Name - Green (success) and Blue (primary) styled buttons."""
     markup = InlineKeyboardMarkup(row_width=2)
-    btn_copy_first = InlineKeyboardButton(text=f"First: {first_name}", copy_text=CopyTextButton(text=first_name))
-    btn_copy_last = InlineKeyboardButton(text=f"Last: {last_name}", copy_text=CopyTextButton(text=last_name))
+    btn_copy_first = InlineKeyboardButton(text=f"First: {first_name}", copy_text=CopyTextButton(text=first_name), style="success")
+    btn_copy_last = InlineKeyboardButton(text=f"Last: {last_name}", copy_text=CopyTextButton(text=last_name), style="success")
     markup.add(btn_copy_first, btn_copy_last)
     
-    btn_copy_full = InlineKeyboardButton(text=f"Copy: {full_name}", copy_text=CopyTextButton(text=full_name))
+    btn_copy_full = InlineKeyboardButton(text=f"Copy: {full_name}", copy_text=CopyTextButton(text=full_name), style="primary")
     markup.add(btn_copy_full)
     return markup
 
 
 def create_2fa_output_markup(otp_code, secret_key=None):
-    """Inline copy button for 2FA: ONLY the 6-digit code, NO emoji!"""
+    """Inline copy button for 2FA: ONLY the 6-digit code, NO emoji, styled in SUCCESS GREEN!"""
     markup = InlineKeyboardMarkup(row_width=1)
-    # EXACT 6-digit code on the button, NO emoji! Clicking it copies the code!
-    btn_otp = InlineKeyboardButton(text=f"{otp_code}", copy_text=CopyTextButton(text=otp_code))
+    # EXACT 6-digit code on the button, NO emoji! Styled green (success)!
+    btn_otp = InlineKeyboardButton(text=f"{otp_code}", copy_text=CopyTextButton(text=otp_code), style="success")
     markup.add(btn_otp)
     return markup
 
 
 def create_fb_lite_markup(uid):
-    """Inline copy and profile open buttons for FB Lite."""
+    """Inline copy and profile open buttons for FB Lite: Success Green, Primary Blue, Danger Red."""
     markup = InlineKeyboardMarkup(row_width=2)
-    btn_copy_uid = InlineKeyboardButton(text=f"Copy UID: {uid}", copy_text=CopyTextButton(text=uid))
+    btn_copy_uid = InlineKeyboardButton(text=f"Copy UID: {uid}", copy_text=CopyTextButton(text=uid), style="success")
     clean_url = f"https://facebook.com/{uid}"
-    btn_open = InlineKeyboardButton(text="Open Clean Profile", url=clean_url)
-    markup.add(btn_copy_uid, btn_open)
+    btn_open = InlineKeyboardButton(text="Open Clean Profile ↗", url=clean_url, style="primary")
+    markup.add(btn_copy_uid)
+    markup.add(btn_open)
+    
+    btn_another = InlineKeyboardButton(text="Extract Another", callback_data="act:fblite", style="primary")
+    btn_back = InlineKeyboardButton(text="Back to Main Menu", callback_data="menu:main", style="danger")
+    markup.add(btn_another, btn_back)
     return markup
 
 
 def create_stylish_font_markup(best_font):
-    """Inline copy button for stylish font."""
+    """Inline copy button for stylish font - Success Green."""
     markup = InlineKeyboardMarkup()
-    btn_copy = InlineKeyboardButton(text="Copy Bold Font", copy_text=CopyTextButton(text=best_font))
+    btn_copy = InlineKeyboardButton(text="Copy Bold Font", copy_text=CopyTextButton(text=best_font), style="success")
     markup.add(btn_copy)
     return markup
 
 
 def create_user_agent_markup(ua_string):
-    """Inline copy button for User-Agent."""
+    """Inline copy button for User-Agent - Success Green."""
     markup = InlineKeyboardMarkup()
-    btn_copy = InlineKeyboardButton(text="Copy User-Agent", copy_text=CopyTextButton(text=ua_string))
+    btn_copy = InlineKeyboardButton(text="Copy User-Agent", copy_text=CopyTextButton(text=ua_string), style="success")
     markup.add(btn_copy)
     return markup
 
@@ -281,7 +287,7 @@ def format_history_message(user_name, records, total_count):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>User:</b> {user_name}\n"
         f"💾 <b>Stored Cache Records:</b> <b>{total_count}</b> entries\n"
-        f"⏱ <b>Cache Status:</b> 🟢 <b>Active & Synced</b> ({now_str})\n"
+        f"⏱ <b>Cache Status:</b> <b>Active & Synced</b> ({now_str})\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
     )
     if not records:
@@ -500,7 +506,7 @@ def handle_fb_lite_prompt(message):
         "• <code>https://www.facebook.com/profile.php?id=...</code>\n"
         "• <code>https://lite.facebook.com/...</code>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "⚡ <i>The bot will extract the UID and check in realtime whether the ID is 🟢 Live or 🔴 Dead / Checkpoint (Human)!</i>"
+        "⚡ <i>The bot will extract the UID and check in realtime whether the ID is Live or Dead / Checkpoint (Human)!</i>"
     )
     bot.send_message(message.chat.id, prompt_text, reply_markup=get_fb_lite_reply_keyboard())
 
@@ -720,7 +726,7 @@ def handle_all_text(message):
             markup = InlineKeyboardMarkup(row_width=2)
             row = []
             for r in valid_results[:4]:
-                row.append(InlineKeyboardButton(text=f"{r['otp']}", copy_text=CopyTextButton(text=r['otp'])))
+                row.append(InlineKeyboardButton(text=f"{r['otp']}", copy_text=CopyTextButton(text=r['otp']), style="success"))
                 if len(row) == 2:
                     markup.add(*row)
                     row = []
@@ -757,6 +763,27 @@ def callback_back_to_main(call):
         "👇 <b>Select an option below:</b>"
     )
     bot.send_message(call.message.chat.id, text, reply_markup=get_main_reply_keyboard())
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "act:fblite")
+def callback_act_fblite(call):
+    """Prompts user to extract another FB Lite UID."""
+    user_id = call.from_user.id
+    user_states[user_id] = "waiting_fb_lite"
+    try:
+        bot.answer_callback_query(call.id)
+    except Exception:
+        pass
+    prompt_text = (
+        "🆔 <b>FB LITE UID & LIVE CHECKER</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "Please send your <b>Numeric UID</b> or <b>Facebook Profile Link</b>:\n\n"
+        "📝 <b>Supported Formats:</b>\n"
+        "• <code>100084729104821</code> <i>(Direct Numeric UID)</i>\n"
+        "• <code>https://www.facebook.com/profile.php?id=...</code>\n"
+        "• <code>https://lite.facebook.com/...</code>\n"
+    )
+    bot.send_message(call.message.chat.id, prompt_text, reply_markup=get_fb_lite_reply_keyboard())
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("fn:"))
